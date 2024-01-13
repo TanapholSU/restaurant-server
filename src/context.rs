@@ -1,14 +1,17 @@
-use std::sync::Arc;
-use sqlx::postgres::PgPoolOptions;
 
-use crate::{config::AppConfig, dao::pg_order_dao::PgTableOrderDAO, error::ApiError};
+use std::sync::Arc;
+use sqlx::{self, postgres::PgPoolOptions};
+use crate::{dao::pg_order_dao::PgTableOrderDAO, config::AppConfig, error::ApiError};
+
 
 /// struct to store configuration as shared state in axum.
 #[derive(Clone)]
 pub struct ApiContext {
     /// variable to store config parameters from environments (using hashmap for future proof)
     pub config: Arc<AppConfig>,
-    dbo: PgTableOrderDAO,
+
+    /// official async support in rust 1.75 doesn't support dyn trait object yet. So it is fixed to postgres impl for now 
+    pub dbo: PgTableOrderDAO  
 }
 
 
