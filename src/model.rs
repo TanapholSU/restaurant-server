@@ -1,7 +1,9 @@
+
+
+use axum::{response::IntoResponse, http::{StatusCode, header}};
 use chrono::{DateTime, Utc};
 use serde::{Serialize, Deserialize};
 use sqlx::prelude::FromRow;
-
 
 
 /// This struct represents an order record in the database.
@@ -96,5 +98,51 @@ impl TableOrdersRequest{
     
     pub fn to_json(&self)->Result<String, serde_json::Error>{
         serde_json::to_string_pretty(self)
+    }
+}
+
+
+/// This struct represents the responds payload returning back to client
+/// It contains both table_id and list of orderitem
+#[derive(Serialize, Deserialize, Debug)]
+pub struct TableOrdersResponse{
+    /// status code (for future error implementation)
+    pub status_code: u16,
+
+    /// table id of the orders
+    pub table_id: i16,
+
+    /// orders belonging to table_id
+    pub orders: Vec<OrderItem>
+}
+
+
+impl TableOrdersResponse{
+    /// Utility function for creating new TableOrdersResponse
+    pub fn new(status_code: u16, table_id: i16, orders: Vec<OrderItem>) -> Self{
+        Self { status_code: status_code, table_id: table_id, orders: orders }
+    }
+}
+
+
+impl IntoResponse for TableOrdersResponse{
+    /// trait implementation to convert TableOrdersResponse to Axum response
+    fn into_response(self) -> axum::response::Response {
+        match serde_json::to_string_pretty(&self){
+            Ok(json) => {
+                (
+                    StatusCode::OK,
+                    [(header::CONTENT_TYPE, "application/json")],
+                    json
+                ).into_response()
+            },
+            Err(_) => {
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    [(header::CONTENT_TYPE, "application/json")],
+                    "{\"status_code\":500,\"error_cause\":\"json serialization error (invalid status code)\"}".to_string(),
+                ).into_response()
+            }
+        }
     }
 }
