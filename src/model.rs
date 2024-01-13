@@ -3,6 +3,7 @@ use serde::{Serialize, Deserialize};
 use sqlx::prelude::FromRow;
 
 
+
 /// This struct represents an order record in the database.
 #[derive(Serialize, Deserialize, FromRow, Debug, PartialEq, Eq, Clone)]
 pub struct OrderItem{
@@ -48,18 +49,52 @@ pub struct TableOrdersRequest{
 
 }
 
+impl OrderItemRequest{
 
-/// This struct represents the responds payload returning back to client
-/// It contains both table_id and list of orderitem
-#[derive(Serialize, Deserialize, Debug)]
-pub struct TableOrdersResponse{
-    /// status code (for future extension)
-    pub status_code: u16,
+    /// Helper function to create OrderItemRequest struct
+    pub fn new(table_id: i16, item_name:&str, note:&str) -> Self{
+        OrderItemRequest{
+            table_id: table_id,
+            item_name: item_name.to_string(),
+            note: Some(note.to_string())
+        }
+    }
 
-    /// table id of the orders
-    pub table_id: i16,
-
-    /// orders belonging to table_id
-    pub orders: Vec<OrderItem>
+    /// Helper function to create OrderItemRequest struct without note
+    pub fn new_wihout_note(table_id: i16, item_name:&str) -> Self{
+        OrderItemRequest{
+            table_id: table_id,
+            item_name: item_name.to_string(),
+            note: None
+        }
+    }
 }
 
+
+impl TableOrdersRequest{
+
+    /// Helper function to create table order struct
+    pub fn new(table_id: i16) -> Self{
+        Self { table_id: table_id, orders: Vec::new() }
+    }
+
+    /// Helper function to create new order item request and attch to  OrderItemRequest struct
+    pub fn add_order(&mut self, item_name: &str, note: &str){
+        self.orders.push(OrderItemRequest::new(self.table_id, item_name, note));
+    }
+
+    /// Helper function to create new order item (without note) request and attch to  OrderItemRequest struct
+    pub fn add_order_wihtout_note(&mut self, item_name: &str){
+        self.orders.push(OrderItemRequest::new_wihout_note(self.table_id, item_name));
+    }
+
+    /// This function consume TableOrderRequest and returns Vec<OrderItemRequest>
+    /// The result is later sent to business logic to determine arrival time and then insert to actual db
+    pub fn get_orders(self) -> Vec<OrderItemRequest>{
+        self.orders
+    }
+    
+    pub fn to_json(&self)->Result<String, serde_json::Error>{
+        serde_json::to_string_pretty(self)
+    }
+}
