@@ -8,6 +8,8 @@ pub mod config;
 
 use tokio::net::TcpListener;
 
+
+
 pub async fn run_server() -> Result<(), error::ApiError>{
     let config = config::AppConfig::new_from_env();
     let host = config.get_host();

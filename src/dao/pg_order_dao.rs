@@ -122,6 +122,7 @@ impl TableOrderDAO for PgTableOrderDAO{
                 transaction.commit().await
                     .map_err(sqlx_error_to_api_error!("Could not close db transaction"))  // commit transaction
             )
+
     }
 
 
