@@ -96,7 +96,7 @@ For testing, some unit and integration tests (for DAO and REST API) are implemen
 
 
 ### TableOrderRequest object
-This object is used for client to add orders to specific table. 
+This object is used for client to add orders to specific table. It includes list of OrderItemRequest objects.
 
 | Attribute   | Type                   | Description                                                                          |
 |-------------|------------------------|--------------------------------------------------------------------------------------|
@@ -106,7 +106,7 @@ This object is used for client to add orders to specific table.
 
 ### OrderItemRequest object
 
-This object contains (and partial) order information of each order submitted by client
+This object contains (and partial) order information of each order submitted by client.
 
 | Attribute   | Type                   | Description                                                                          |
 |-------------|------------------------|--------------------------------------------------------------------------------------|
@@ -115,7 +115,7 @@ This object contains (and partial) order information of each order submitted by 
 | note      | String | Optional note 
 
 
-#### Sample TableOrderRequest payload with one OrderItemRequest (for Add orders function via POST)
+#### Sample TableOrderRequest payload with two OrderItemRequest objects (for Add orders function via POST)
 
 ```
 {
@@ -125,6 +125,11 @@ This object contains (and partial) order information of each order submitted by 
       "table_id": 7,
       "item_name": "Pizza",
       "note": "Without pineapple"
+    },
+    {
+      "table_id": 7,
+      "item_name": "Sushi",
+      "note": "Less rice"
     }
   ]
 }
@@ -134,7 +139,7 @@ This object contains (and partial) order information of each order submitted by 
 
 
 ### TableOrderResponse object
-This object represents the table information returning from application 
+This object represents the table information returning from application. 
 
 | Attribute   | Type                   | Description                                                                          |
 |-------------|------------------------|--------------------------------------------------------------------------------------|
