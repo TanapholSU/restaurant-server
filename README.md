@@ -17,10 +17,14 @@ to be counted down in real time, only upon item creation and then removed with t
 * Like billing for each table, we can think that adding orders = update the table information (bill for that table)
   * So, adding orders won't return order item directly. It will returns the updated table orders
   * Removing order operation is similar to adding operation. It will returns the updated table orders
+    * Pros -> Less communication requests. Client doesn't need to call get all tables again
+    * Cons -> Larger payload. 
 
-* The requirements don't contain any information about what kind of restaurants or the available menu items is limited  or not
-  * A order record in the database stores a single item  name as String directly
-  * If we want limit what dishes customers can order, we can create a separated menu items table and join with orders table
+* The requirements don't contain any information about 
+  * what kind of restaurants or the available menu items is limited  or not
+    * A order record in the database stores a single item  name as String directly
+    * If we want limit what dishes customers can order, we can create a separated menu items table and join with orders table
+  * security -> omitted entirely
 
 * To make URL path readable, I decided to use sub-resource method like `/api/v1/tables/<table_id>/orders/<order_id>`
   * `table_id` is limited to `i16`  because postgres doesn't support unsigned and simple restaurant should not have much tables
