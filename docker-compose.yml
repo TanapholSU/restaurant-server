@@ -1,0 +1,15 @@
+version: "2"
+services:
+  
+# This is normal Postgres without UDF function 
+  pgdb:
+    image: postgres:latest
+    ports: ["5432:5432"]
+    environment: 
+      - POSTGRES_DB=test
+      - POSTGRES_PASSWORD=password
+      - TZ=Asia/Tokyo
+    command: ["postgres", "-c", "log_statement=all", "-c", "log_destination=stderr"]
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
