@@ -1,5 +1,7 @@
+
 use axum::{Router, routing::get};
-use restaurant_server::{config::AppConfig, handlers::handle_health_check, error::ApiError, dao::{pg_order_dao::PgTableOrderDAO, order_dao::TableOrderDAO}};
+use chrono::Utc;
+use restaurant_server::{config::AppConfig, handlers::handle_health_check, error::ApiError, dao::{pg_order_dao::PgTableOrderDAO, order_dao::TableOrderDAO}, model::{TableOrdersRequest, OrderItem, OrderItemRequest}};
 use sqlx::postgres::PgPoolOptions;
 use tokio::net::TcpListener;
 
@@ -38,7 +40,21 @@ async fn main() {
         .map_err(|x| ApiError::DatabaseError(x)).unwrap();
 
     let dao = PgTableOrderDAO{ db: pool };
-    let r = dao.get_table_orders(1).await.unwrap();
+
+    let t = TableOrdersRequest{ table_id: 1, orders: vec![
+        OrderItemRequest{ table_id: 1, item_name: format!("A"), note: Some(format!("B")) },
+        OrderItemRequest{ table_id: 1, item_name: format!("C"), note: None }
+    ] };
+    
+    let v = vec![
+        OrderItem{table_id:1,item_name:format!("A"),note:Some(format!("B")), order_id: -1, creation_time: Utc::now(), estimated_arrival_time: Utc::now() },
+        OrderItem{table_id:1,item_name:format!("A1"),note:Some(format!("B1")), order_id: -1, creation_time: Utc::now(), estimated_arrival_time: Utc::now() }, 
+    ];
+
+    let r = dao.add_table_orders( v.as_slice() ).await.unwrap();
+    let r = dao.get_table_orders( 1 ).await.unwrap();
+    
+
     println!("{:?}", r);
         
     
