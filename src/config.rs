@@ -47,3 +47,52 @@ impl AppConfig{
         self.port.unwrap_or(3000)
     }
 }
+
+
+#[cfg(test)]
+mod test{
+    use super::AppConfig;
+
+    #[test]
+    fn test_get_values_from_config(){
+        let config = AppConfig{
+            db_url: Some("URL".to_string()),
+            host: Some("host".to_string()),
+            port: Some(3333),
+            max_tables: Some(101),
+        };
+
+        assert_eq!(config.db_url, Some("URL".to_string()));
+        assert_eq!(config.host, Some("host".to_string()));
+        assert_eq!(config.port, Some(3333));
+        assert_eq!(config.max_tables, Some(101));
+
+        assert_eq!(config.get_db_url(), "URL");
+        assert_eq!(config.get_host(), "host");
+        assert_eq!(config.get_port(), 3333);
+        assert_eq!(config.get_max_tables(), 101);
+
+    }
+
+    
+    #[test]
+    fn test_get_default_values_from_config(){
+        let config = AppConfig{
+            db_url: None,
+            host: None,
+            port: None,
+            max_tables: None
+        };
+
+        assert_eq!(config.db_url, None);
+        assert_eq!(config.host,None);
+        assert_eq!(config.port,None);
+        assert_eq!(config.max_tables,None);
+
+        assert_eq!(config.get_db_url(), r#"postgres://postgres:password@localhost/test"#);
+        assert_eq!(config.get_host(), "localhost");
+        assert_eq!(config.get_port(), 3000);
+        assert_eq!(config.get_max_tables(), 100);
+
+    }
+}
