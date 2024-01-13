@@ -1,0 +1,84 @@
+{
+    "client": "Thunder Client",
+    "collectionName": "SimpleRestaurant",
+    "dateExported": "2024-01-13T12:24:39.396Z",
+    "version": "1.1",
+    "folders": [],
+    "requests": [
+        {
+            "_id": "b0c34389-e875-4d09-a5f7-7e4cd3d4428d",
+            "colId": "f8186b25-b1a9-4e17-9bff-95a3c0595401",
+            "containerId": "",
+            "name": "Health",
+            "url": "localhost:3333/api/v1/health",
+            "method": "GET",
+            "sortNum": 10000,
+            "created": "2024-01-12T03:55:47.180Z",
+            "modified": "2024-01-12T03:55:47.180Z",
+            "headers": [],
+            "params": [],
+            "tests": []
+        },
+        {
+            "_id": "804d0718-e71e-4074-836d-50a52b5f2bee",
+            "colId": "f8186b25-b1a9-4e17-9bff-95a3c0595401",
+            "containerId": "",
+            "name": "Get table orders (all)",
+            "url": "localhost:3333/api/v1/tables/700000/orders",
+            "method": "GET",
+            "sortNum": 20000,
+            "created": "2024-01-12T03:58:29.279Z",
+            "modified": "2024-01-13T00:39:32.610Z",
+            "headers": [],
+            "params": [],
+            "tests": []
+        },
+        {
+            "_id": "7c5132ee-4645-4040-834b-a0fc1ff9a64e",
+            "colId": "f8186b25-b1a9-4e17-9bff-95a3c0595401",
+            "containerId": "",
+            "name": "Get specific order",
+            "url": "localhost:3333/api/v1/tables/70000/orders/1",
+            "method": "GET",
+            "sortNum": 30000,
+            "created": "2024-01-12T03:59:10.967Z",
+            "modified": "2024-01-13T00:55:23.783Z",
+            "headers": [],
+            "params": [],
+            "tests": []
+        },
+        {
+            "_id": "83c74116-3e9d-47ca-9762-9e41038c2322",
+            "colId": "f8186b25-b1a9-4e17-9bff-95a3c0595401",
+            "containerId": "",
+            "name": "Delete specific order",
+            "url": "localhost:3333/api/v1/tables/70000/orders/1",
+            "method": "GET",
+            "sortNum": 35000,
+            "created": "2024-01-13T12:23:48.144Z",
+            "modified": "2024-01-13T12:23:48.144Z",
+            "headers": [],
+            "params": [],
+            "tests": []
+        },
+        {
+            "_id": "690f6311-309d-400a-beaf-280e8a6f5ff0",
+            "colId": "f8186b25-b1a9-4e17-9bff-95a3c0595401",
+            "containerId": "",
+            "name": "Add orders",
+            "url": "localhost:3333/api/v1/tables/7/orders",
+            "method": "POST",
+            "sortNum": 40000,
+            "created": "2024-01-12T05:45:54.580Z",
+            "modified": "2024-01-13T01:31:37.052Z",
+            "headers": [],
+            "params": [],
+            "body": {
+                "type": "json",
+                "raw": "{\r\n  \"table_id\": 7,\r\n  \"orders\": [\r\n    {\r\n      \"table_id\": 7,\r\n      \"item_name\": \"item-7-0\",\r\n      \"note\": \"note-7-0\"\r\n    },\r\n    {\r\n      \"table_id\": 7,\r\n      \"item_name\": \"item-7-1\",\r\n      \"note\": \"note-7-1\"\r\n    },\r\n    {\r\n      \"table_id\": 7,\r\n      \"item_name\": \"item-7-2\",\r\n      \"note\": \"note-7-2\"\r\n    },\r\n    {\r\n      \"table_id\": 7,\r\n      \"item_name\": \"item-7-3\",\r\n      \"note\": \"note-7-3\"\r\n    }\r\n  ]\r\n}",
+                "form": []
+            },
+            "tests": []
+        }
+    ]
+}
