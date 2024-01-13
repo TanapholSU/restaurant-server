@@ -146,7 +146,7 @@ pub async fn handle_add_orders(State(context): State<ApiContext>,
     tracing::info!("[add] adding orders (size= {})", orders.len());
 
     context.dbo.add_table_orders(&orders) // add orders to a table
-        .and_then( |_| context.dbo.get_table_orders(table_id)) // chain get updated table orders future
+        .and_then( |_| context.dbo.get_table_orders(table_id)) // get updated table orders
         .await
         .and_then(convert_order_items_to_table_order_response!(table_id))// generate TableOrdersResponse from orders
         .unwrap_or_else(ApiError::into_response)  // generate error response in case of error
@@ -199,3 +199,83 @@ pub async fn handle_delete_table_order(State(context): State<ApiContext>,
         .unwrap_or_else(ApiError::into_response) // generate error response in case of error
 }
 
+
+
+#[cfg(test)]
+mod test{
+    use crate::model::OrderItemRequest;
+
+    use super::*;
+    #[test]
+    fn test_process_one_order_request(){
+        let current_time = Utc::now();
+        let order_request = OrderItemRequest::new(1, "A", "B");
+
+        let result = process_order_request(order_request, current_time);
+
+        assert_eq!(result.order_id, -1);
+        assert_eq!(result.table_id, 1);
+        assert_eq!(result.item_name, "A");
+        assert_eq!(result.note, Some("B".to_string()));
+        
+        let diff = result.estimated_arrival_time - result.creation_time;
+        assert!(diff.num_minutes() >= 5);
+        assert!(diff.num_minutes() <= 15);
+    }
+
+    #[test]
+    fn test_process_order_requests(){
+
+        let mut orders = TableOrdersRequest::new(1);
+
+        orders.orders = vec![
+            OrderItemRequest::new(1, "A", "B"),
+            OrderItemRequest::new(1, "C", "D")
+        ];
+
+        let results = process_order_requests(orders);
+
+        assert_eq!(results.len(), 2);
+
+        let result = &results[0];
+        assert_eq!(result.order_id, -1);
+        assert_eq!(result.table_id, 1);
+        assert_eq!(result.item_name, "A");
+        assert_eq!(result.note, Some("B".to_string()));
+        
+        let diff = result.estimated_arrival_time - result.creation_time;
+        assert!(diff.num_minutes() >= 5);
+        assert!(diff.num_minutes() <= 15);
+
+        let result = &results[1];
+        assert_eq!(result.order_id, -1);
+        assert_eq!(result.table_id, 1);
+        assert_eq!(result.item_name, "C");
+        assert_eq!(result.note, Some("D".to_string()));
+        
+        let diff = result.estimated_arrival_time - result.creation_time;
+        assert!(diff.num_minutes() >= 5);
+        assert!(diff.num_minutes() <= 15);
+    }
+
+
+    #[test]
+    fn test_validate_table_id_range(){
+        assert_eq!(validate_table_id_range(10, 1), true);
+        assert_eq!(validate_table_id_range(10, 11), false);
+        assert_eq!(validate_table_id_range(-1, 11), false);
+    }
+
+    #[test]
+    fn test_validate_table_id_from_orders(){
+        let order1 = OrderItemRequest::new_wihout_note(1, "A");
+        let order2 = OrderItemRequest::new_wihout_note(1, "B");
+        let order3 = OrderItemRequest::new_wihout_note(2, "B");
+
+        assert_eq!(validate_table_id_from_orders_requests(&vec![order1.clone(), order2.clone()], 1), true);
+        assert_eq!(validate_table_id_from_orders_requests(&vec![order1.clone(), order2.clone()], 5), false);
+        assert_eq!(validate_table_id_from_orders_requests(&vec![order1.clone(), order3.clone()], 1), false);
+    }
+
+    
+}

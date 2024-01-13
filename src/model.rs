@@ -106,7 +106,7 @@ impl TableOrdersRequest{
 /// It contains both table_id and list of orderitem
 #[derive(Serialize, Deserialize, Debug)]
 pub struct TableOrdersResponse{
-    /// status code (for future error implementation)
+    /// status code (for future extension)
     pub status_code: u16,
 
     /// table id of the orders
@@ -115,6 +115,8 @@ pub struct TableOrdersResponse{
     /// orders belonging to table_id
     pub orders: Vec<OrderItem>
 }
+
+
 
 
 impl TableOrdersResponse{
@@ -146,3 +148,126 @@ impl IntoResponse for TableOrdersResponse{
         }
     }
 }
+
+#[cfg(test)]
+ mod test{
+    use chrono::Utc;
+
+    use crate::model::{TableOrdersRequest, OrderItemRequest, TableOrdersResponse, OrderItem};
+
+    
+    #[test]
+    fn test_creat_order_item_request(){
+        let order = OrderItemRequest::new(10, "A", "B");
+        assert_eq!(order.item_name, "A");
+        assert_eq!(order.table_id, 10);
+        assert_eq!(order.note, Some("B".to_string()));
+    }
+
+    #[test]
+    fn test_creat_order_item_request_without_note(){
+        let order = OrderItemRequest::new_wihout_note(10, "A");
+        assert_eq!(order.item_name, "A");
+        assert_eq!(order.table_id, 10);
+        assert_eq!(order.note, None);
+    }
+
+    #[test]
+    fn test_add_table_order_with_note(){
+        let mut table_order = TableOrdersRequest::new(555);
+        table_order.add_order("A", "B");
+        let results = table_order.get_orders();
+
+        assert_eq!(results.len(), 1);
+
+        let order = &results[0];
+        assert_eq!(order.item_name, "A");
+        assert_eq!(order.table_id, 555);
+        assert_eq!(order.note, Some("B".to_string()));
+    }
+
+    #[test]
+    fn test_add_table_order_without_note(){
+        let mut table_order = TableOrdersRequest::new(555);
+        table_order.add_order_wihtout_note("A");
+        let results = table_order.get_orders();
+
+        assert_eq!(results.len(), 1);
+
+        let order = &results[0];
+        assert_eq!(order.item_name, "A");
+        assert_eq!(order.table_id, 555);
+        assert_eq!(order.note, None);
+    }
+
+    
+    #[test]
+    fn test_add_multiple_table_orders(){
+        let mut table_order = TableOrdersRequest::new(555);
+        table_order.add_order_wihtout_note("C");
+        table_order.add_order("A", "B");
+
+        let results = table_order.get_orders();
+
+        assert_eq!(results.len(), 2);
+
+        let order = &results[0];
+        assert_eq!(order.item_name, "C");
+        assert_eq!(order.table_id, 555);
+        assert_eq!(order.note, None);
+
+        let order = &results[1];
+        assert_eq!(order.item_name, "A");
+        assert_eq!(order.table_id, 555);
+        assert_eq!(order.note, Some("B".to_string()));
+
+    }
+
+
+    #[test]
+    fn test_create_order_item_request(){
+        let order = OrderItemRequest::new(1, "C", "D");
+
+        assert_eq!(order.table_id, 1);
+        assert_eq!(order.item_name, "C");
+        assert_eq!(order.note, Some("D".to_string()));
+    }
+
+    #[test]
+    fn test_create_order_item_request_without_note(){
+        let order = OrderItemRequest::new_wihout_note(1, "C");
+
+        assert_eq!(order.table_id, 1);
+        assert_eq!(order.item_name, "C");
+        assert_eq!(order.note, None);
+    }
+
+
+    
+    #[test]
+    fn test_create_table_order_response(){
+        let time = Utc::now();
+        let item = OrderItem{ order_id: 1, 
+            table_id: 123, 
+            item_name: "A".to_string(), 
+            note: Some("B".to_string()), 
+            creation_time: time, 
+            estimated_arrival_time: time
+        };
+
+        let orders = vec![
+            item.clone()
+        ];
+
+        
+        let order = TableOrdersResponse::new(555, 123, orders.clone() );
+        assert_eq!(order.table_id, 123);
+        assert_eq!(order.status_code, 555);
+        assert_eq!(order.orders.len(), 1);
+        assert_eq!(order.orders[0], item);
+        
+    }
+
+
+    
+ }

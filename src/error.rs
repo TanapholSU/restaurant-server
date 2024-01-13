@@ -77,3 +77,39 @@ impl IntoResponse for ApiError{
     }
 }
 
+
+#[cfg(test)]
+mod test{
+    use axum::http::StatusCode;
+
+    use super::ApiError;
+
+
+    #[test]
+    fn test_status_code(){
+        let db_error = ApiError::DatabaseError(sqlx::Error::PoolClosed);
+        let bad_request = ApiError::BadRequest("hello".to_string());
+        let server_error = ApiError::ServerError("hello".to_string());
+        let table_not_found = ApiError::TableNotFound;
+        let order_not_found = ApiError::OrderNotFound;
+
+        assert_eq!(db_error.status_code(), 500);
+        assert_eq!(db_error.status_code(), StatusCode::INTERNAL_SERVER_ERROR);
+
+        assert_eq!(bad_request.status_code(), 400);
+        assert_eq!(bad_request.status_code(), StatusCode::BAD_REQUEST);
+        
+        
+        assert_eq!(server_error.status_code(), 500);
+        assert_eq!(server_error.status_code(), StatusCode::INTERNAL_SERVER_ERROR);
+
+        assert_eq!(table_not_found.status_code(), 404);
+        assert_eq!(table_not_found.status_code(), StatusCode::NOT_FOUND);
+
+        
+        assert_eq!(order_not_found.status_code(), 404);
+        assert_eq!(order_not_found.status_code(), StatusCode::NOT_FOUND);
+    }
+
+
+}
