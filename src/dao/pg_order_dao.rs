@@ -1,9 +1,7 @@
-use sqlx::{PgPool, Transaction, Postgres};
-
-use crate::{model::OrderItem, error::ApiError};
-
-use super::order_dao::TableOrderDAO;
-
+use crate::dao::order_dao::TableOrderDAO;
+use crate::model::OrderItem;
+use crate::error::ApiError;
+use sqlx::{Postgres, Transaction, PgPool};
 
 #[derive(Clone)]
 /// Implementation of order DAO
@@ -60,9 +58,7 @@ impl PgTableOrderDAO{
 
 }
 
-
 impl TableOrderDAO for PgTableOrderDAO{
-    #[doc = r" function for adding OrderItems to table (each item already contains table_id)"]
     async fn add_table_orders(&self, items: &[OrderItem]) -> Result<(), ApiError> {
         // acquire transaction
         // we can  chain with the following statement but the code will be messier to my liking
@@ -77,26 +73,39 @@ impl TableOrderDAO for PgTableOrderDAO{
             )
     }
 
-    #[doc = r" function to get all OrderItems for specific table_id"]
+
     async fn get_table_orders(&self, table_id: i16) -> Result<Vec<OrderItem>, ApiError> {
         sqlx::query_as("SELECT * FROM ORDERS WHERE table_id = $1 ORDER BY order_id")
                 .bind(table_id)
                 .fetch_all(&self.db)
                 .await
                 .map_err(sqlx_error_to_api_error!("Could not query table orders from DB"))
+
+        // sqlx::query_as!(OrderItem, 
+        //     "SELECT * FROM ORDERS WHERE table_id = $1 ORDER BY order_id", 
+        // table_id)
+        //     .fetch_all(&self.db).await
+        //     .map_err(sqlx_error_to_api_error!("Could not query table orders from DB"))
+            
     }
 
-    #[doc = r" function to get specific OrderItem (in a vec for simplicity for caller) in the specific table"]
     async fn get_specific_table_order(&self, table_id: i16, order_id: i32) -> Result<Vec<OrderItem>, ApiError>{
+
         sqlx::query_as("SELECT * FROM ORDERS WHERE table_id = $1 and order_id = $2 LIMIT 1")
                 .bind(table_id)
                 .bind(order_id)
                 .fetch_all(&self.db).await
                 .map_err(sqlx_error_to_api_error!("Could not query specific table order from DB"))
                 .and_then(PgTableOrderDAO::is_existing_order)
+        // sqlx::query_as!(OrderItem, 
+        //     "SELECT * FROM ORDERS WHERE table_id = $1 and order_id = $2 LIMIT 1", 
+        //     table_id,
+        //     order_id
+        // ).fetch_all(&self.db).await
+        //     .map_err(sqlx_error_to_api_error!("Could not query specific table order from DB"))
+        //     .and_then(PgTableOrderDAO::is_existing_order)
     }
 
-    #[doc = r" function to remove specific OrderItem from DB"]
     async fn remove_order(&self, table_id: i16, order_id: i32) -> Result<(), ApiError> {
         let mut transaction = self.db.begin()
             .await
@@ -113,20 +122,11 @@ impl TableOrderDAO for PgTableOrderDAO{
                 transaction.commit().await
                     .map_err(sqlx_error_to_api_error!("Could not close db transaction"))  // commit transaction
             )
-        // sqlx::query_as!(OrderItem, 
-        //     "DELETE FROM ORDERS WHERE table_id = $1 and order_id = $2 RETURNING *", 
-        //     table_id,
-        //     order_id
-        // ).fetch_all(&self.db).await
-        //     .map_err(sqlx_error_to_api_error!("Could delete order from DB"))
-        //     .and_then(PgTableOrderDAO::is_existing_order)
-        //     .and(
-        //         transaction.commit().await
-        //             .map_err(sqlx_error_to_api_error!("Could not close db transaction"))  // commit transaction
-        //     )
     }
+
 
 
 }
 
-    
+
+
