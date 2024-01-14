@@ -28,7 +28,8 @@ to be counted down in real time, only upon item creation and then removed with t
 
 * To make URL path readable, I decided to use sub-resource method like `/api/v1/tables/<table_id>/orders/<order_id>`
   * `table_id` is limited to `i16`  because postgres doesn't support unsigned and simple restaurant should not have much tables
-  * `order_id` is `i32` because for simplicity (easy to read/test) and for simple restaurant should be enough. 
+  * `order_id` is `i32` because for simplicity (easy to read/test) and for simple restaurant should be enough.
+* For client application, it is stored in a separated repository >>> [here](https://github.com/TanapholSU/restaurant-client/)
 
 
 # Deployment (for testing purpose)
