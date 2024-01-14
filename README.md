@@ -40,6 +40,7 @@ to be counted down in real time, only upon item creation and then removed with t
 ## Setup postgresql database 
 * In the same directory, run `docker compose up -d pgdb`
 * Then, install sqlx cli using command `cargo install sqlx-cli`
+* Configure `DATABASE_URL` in `.env` file if necessary (see below)
 * Run `sqlx db setup` to initialize database
 
 ## .env configuration
@@ -50,18 +51,19 @@ DATABASE_URL = <database connection url>  # e.g., postgres://postgres:password@l
 HOST = <host ip/ uri>  # e.g., 0.0.0.0  to accept all clients
 PORT = 3333  # service port for client
 ```
-## Docker 
-To build and deploy using docker compose, please follow this setup
-
-1. Configure environment parameters of restaurant service in `docker-compose.yml`
-2. `docker compose build` to build restaurant service
-3. `docker compose up -d pgdb` to deploy database. After that, access to db and manually setup database schema and table from `migration` directory
-4. `docker compose up -d restaurant`  to run restaurant service
 
 ## Running & test
 After settingup database and config `.env`, run `cargo run` as usual to run server 
 
-For testing, some unit and integration tests (for DAO and REST API) are implemented.  Please execute `cargo test` command
+To run unit and integration tests (for DAO and REST API), execute `cargo test` command
+
+## Docker 
+It is possible to build and deploy using docker compose, please follow these steps:
+
+1. Configure environment parameters of restaurant service in `docker-compose.yml` if necessary
+2. `docker compose build` to build restaurant service
+3. If necessary, run `docker compose up -d pgdb` to deploy database. After that, access to db and manually setup database schema and execute sql file in `migration` directory to create table
+4. `docker compose up -d restaurant`  to run restaurant service
 
 # Rest API details
 ## Add orders
