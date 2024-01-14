@@ -60,6 +60,7 @@ For testing, some unit and integration tests (for DAO and REST API) are implemen
 ## Add orders
 
 * URL endpoint is `/api/v1/tables/<table id>/orders` where `<table_id>` is the target table id
+  * Example:  `http://127.0.0.1/api/v1/tables/1/orders`  for adding orders to table `1`
 * Send `TableOrderRequest`  object *(see below in object section)* by using `POST` method to the endpoint
 * If success, Server returns the updated TableOrderResponse object (see below)  with HTTP status code `200` 
 * If fail, Server returns error object with the following HTTP error status code
@@ -70,7 +71,7 @@ For testing, some unit and integration tests (for DAO and REST API) are implemen
 
 ## Get orders for specific table
 
-* URL endpoint is `/api/v1/tables/<table id>/orders` where `<table_id>` is the target table id
+* Similar to add orders, the URL endpoint is `/api/v1/tables/<table id>/orders` where `<table_id>` is the target table id
 * Send `GET` method to the endpoint
 * If success, Server returns the current TableOrderResponse object with HTTP status code `200` 
 * If fail, Server returns error object with HTTP error status code. `404` is returned if table in the path is larger than `MAX_TABLES` setting. `400` if `<table_id>` in URL path is incorrect. `500` if there is anything wrong with DB/server. 
@@ -79,6 +80,7 @@ For testing, some unit and integration tests (for DAO and REST API) are implemen
 ## Get specifc order from specific table
 
 * URL endpoint is `/api/v1/tables/<table id>/orders/<order_id>` where `<table_id>` and `<order_id>` are the target table and order ids, respectively
+  * Example:  `http://127.0.0.1/api/v1/tables/1/orders/5`  for getting order `5` from table `1`
 * Send `GET` method to the endpoint
 * If success, Server returns the TableOrderResponse object with only specific order in the `orders` field and HTTP status code `200` 
 * If fail, Server returns error object with HTTP error status code. `404` is returned if table in the path is larger than `MAX_TABLES` setting or order does not exist. `400` if `<table_id>` or `order_id` in URL path is incorrect.  `500` if there is anything wrong with DB/server.
@@ -86,7 +88,7 @@ For testing, some unit and integration tests (for DAO and REST API) are implemen
 
 ## Remove specifc order from specific table
 
-* URL endpoint is `/api/v1/tables/<table id>/orders/<order_id>` where `<table_id>` and `<order_id>` are the target table and order ids, respectively
+* Similar to get specific order function, the URL endpoint is `/api/v1/tables/<table id>/orders/<order_id>` where `<table_id>` and `<order_id>` are the target table and order ids, respectively
 * Send `DELETE` method to the endpoint
 * If success, Server returns the updated TableOrderResponse object with HTTP status code `200` 
 * If fail, Server returns error object with HTTP error status code. `404` is returned if table in the path is larger than `MAX_TABLES` setting or order does not exist. `400` if `<table_id>` or `order_id`  in URL path is incorrect.  `500` if there is anything wrong with DB/server.
