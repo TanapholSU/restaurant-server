@@ -38,7 +38,7 @@ to be counted down in real time, only upon item creation and then removed with t
 * Rust 1.75 as official async trait support with trait variants crate are used
 
 ## Setup postgresql database 
-* In the same directory, run `docker compose up -d`
+* In the same directory, run `docker compose up -d pgdb`
 * Then, install sqlx cli using command `cargo install sqlx-cli`
 * Run `sqlx db setup` to initialize database
 
@@ -50,6 +50,13 @@ DATABASE_URL = <database connection url>  # e.g., postgres://postgres:password@l
 HOST = <host ip/ uri>  # e.g., 0.0.0.0  to accept all clients
 PORT = 3333  # service port for client
 ```
+## Docker 
+To build and deploy using docker compose, please follow this setup
+
+1. Configure environment parameters of restaurant service in `docker-compose.yml`
+2. `docker compose build` to build restaurant service
+3. `docker compose up -d pgdb` to deploy database. After that, access to db and manually setup database schema and table from `migration` directory
+4. `docker compose up -d restaurant`  to run restaurant service
 
 ## Running & test
 After settingup database and config `.env`, run `cargo run` as usual to run server 

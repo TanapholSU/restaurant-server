@@ -1,8 +1,26 @@
 version: "2"
 services:
   
-# This is normal Postgres without UDF function 
+  restaurant:
+    image: paidy-restaurant
+    build:
+      context: .
+      dockerfile: Dockerfile
+    
+    ports:
+        - 3333:3333
+
+    environment: 
+      - DATABASE_URL=postgres://postgres:password@pgdb/test
+      - HOST=0.0.0.0
+      - PORT=3333
+      - MAX_TABLES=100
+
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
   pgdb:
+    container_name: pgdb
     image: postgres:latest
     ports: ["5432:5432"]
     environment: 
