@@ -5,7 +5,7 @@ use serde::Deserialize;
 
 #[derive( Debug, Deserialize, Clone)]
 pub struct AppConfig{
-    pub db_url: Option<String>,
+    pub database_url: Option<String>,
     pub host: Option<String>,
     pub port: Option<u16>,
     pub max_tables: Option<i16>
@@ -20,7 +20,7 @@ impl AppConfig{
 
         envy::from_env::<Self>().unwrap_or(
             Self { 
-                db_url: None,
+                database_url: None,
                 host: None, 
                 port: None, 
                 max_tables: None 
@@ -29,7 +29,7 @@ impl AppConfig{
 
     /// function to get copied of db_url if exists. otherwise, default testing db url is returned
     pub fn get_db_url(&self) -> String{
-        self.db_url.clone().unwrap_or(r#"postgres://postgres:password@localhost/test"#.to_string())
+        self.database_url.clone().unwrap_or(r#"postgres://postgres:password@localhost/test"#.to_string())
     }
 
     /// function to get copied of max_tables if exists. otherwise, default testing parameter value is returned
@@ -56,13 +56,13 @@ mod test{
     #[test]
     fn test_get_values_from_config(){
         let config = AppConfig{
-            db_url: Some("URL".to_string()),
+            database_url: Some("URL".to_string()),
             host: Some("host".to_string()),
             port: Some(3333),
             max_tables: Some(101),
         };
 
-        assert_eq!(config.db_url, Some("URL".to_string()));
+        assert_eq!(config.database_url, Some("URL".to_string()));
         assert_eq!(config.host, Some("host".to_string()));
         assert_eq!(config.port, Some(3333));
         assert_eq!(config.max_tables, Some(101));
@@ -78,13 +78,13 @@ mod test{
     #[test]
     fn test_get_default_values_from_config(){
         let config = AppConfig{
-            db_url: None,
+            database_url: None,
             host: None,
             port: None,
             max_tables: None
         };
 
-        assert_eq!(config.db_url, None);
+        assert_eq!(config.database_url, None);
         assert_eq!(config.host,None);
         assert_eq!(config.port,None);
         assert_eq!(config.max_tables,None);

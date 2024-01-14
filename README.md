@@ -46,8 +46,7 @@ to be counted down in real time, only upon item creation and then removed with t
 The application automatically loads config in the .env (if available).  Please configure this file or setup OS environment first.
 
 ```
-DB_URL = <database connection url>  # e.g., postgres://postgres:password@localhost/test
-
+DATABASE_URL = <database connection url>  # e.g., postgres://postgres:password@localhost/test
 HOST = <host ip/ uri>  # e.g., 0.0.0.0  to accept all clients
 PORT = 3333  # service port for client
 ```
