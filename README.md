@@ -149,8 +149,7 @@ This object represents the table information returning from application.
 
 
 ### OrderItem object
-This object represents  a single order  returning from application 
-
+This object represents  a single order item 
 | Attribute   | Type                   | Description                                                                          |
 |-------------|------------------------|--------------------------------------------------------------------------------------|
 | order_id    | number                 | The request table id                                                                 |
@@ -183,7 +182,7 @@ This object represents  a single order  returning from application
 
 
 ### Error object
-error json object obtained from application
+error json object is returned when an error occurs
 
 | Attribute   | Type                   | Description                                                                          |
 |-------------|------------------------|--------------------------------------------------------------------------------------|
