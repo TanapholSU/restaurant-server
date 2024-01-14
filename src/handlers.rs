@@ -146,7 +146,7 @@ pub async fn handle_add_orders(State(context): State<ApiContext>,
     tracing::info!("[add] adding orders (size= {})", orders.len());
 
     context.dbo.add_table_orders(&orders) // add orders to a table
-        .and_then( |_| context.dbo.get_table_orders(table_id)) // get updated table orders
+        .and_then( get_table_orders!(context, table_id)) // get updated table orders
         .await
         .and_then(convert_order_items_to_table_order_response!(table_id))// generate TableOrdersResponse from orders
         .unwrap_or_else(ApiError::into_response)  // generate error response in case of error
@@ -175,7 +175,7 @@ pub async fn handle_get_specific_table_order(State(context): State<ApiContext>,
     
     tracing::info!("[get specific] table id = {table_id}, order_id= {order_id} from path");
     validate_table_id_from_path!(context, table_id);
-
+    
     tracing::info!("[get specific] getting specific order from table {table_id} -> {order_id}");
     context.dbo.get_specific_table_order(table_id, order_id) // get specific order
         .await
