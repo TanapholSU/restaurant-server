@@ -588,3 +588,37 @@ async fn test_remove_order_with_out_of_range_path_ids(db: PgPool) {
 
 }
 
+
+
+#[sqlx::test(fixtures("orders"))]
+async fn test_remove_non_existence_order(db: PgPool) {    
+    let context: ApiContext = ApiContext::new(db);
+
+    let response = app(context.clone())
+                        .oneshot(
+                            Request::builder()
+                            .uri(format!("/api/v1/tables/1/orders/1"))
+                                .method(http::Method::DELETE)
+                                .header(http::header::CONTENT_TYPE, mime::APPLICATION_JSON.as_ref())
+                                .body(Body::empty())
+                                .unwrap(),
+    )
+    .await
+    .unwrap();
+
+    assert_eq!(response.status(), StatusCode::NOT_FOUND);
+
+    let body = response.into_body().collect().await.unwrap().to_bytes();
+    let check_json_value: Value = serde_json::from_slice(&body).unwrap();
+    
+    assert_eq!(check_json_value, json!{
+        {
+            "status_code": 404,
+            "error_cause": "Order not found"
+        }
+    });
+
+    
+    
+}
+
