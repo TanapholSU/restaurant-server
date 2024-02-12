@@ -88,27 +88,6 @@ macro_rules! validate_table_id_range {
 }
 
 
-
-/// validation macro for checking order id range
-macro_rules! check_order_exists {
-    ( $context: expr, $table_id:expr, $order_id:expr)=>{
-        match $context.dbo.get_specific_table_order($table_id, $order_id).await{
-            Ok(vec_result) => {
-                if vec_result.len() == 0{
-                    return ApiError::OrderNotFound.into_response();
-                }
-            }, 
-            Err(err) => {
-                return err.into_response();
-            }
-        }
-    };
-}
-
-
-
-
-
 /// validation macro for checking order id range
 macro_rules! validate_order_id_range {
     ( $order_id:expr)=>{
@@ -219,7 +198,6 @@ pub async fn handle_delete_table_order(State(context): State<ApiContext>,
     
     validate_table_id_range!(context, table_id);    
     validate_order_id_range!(order_id);
-    check_order_exists!(context, table_id, order_id);
     
     context.dbo.remove_order(table_id, order_id) // remove order
         .and_then(get_table_orders!(context, table_id))// get updated orders for the table
