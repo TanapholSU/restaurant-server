@@ -17,7 +17,7 @@ pub async fn run_server() -> Result<(), error::ApiError>{
 
     let database_url =  config.get_db_url();
 
-    tracing::info!("HOST:{host} PORT:{port}  DB URL:{database_url}");
+    tracing::info!("HOST:{host} PORT:{port}");
 
     let context = context::ApiContext::new_from_env().await?;
 
