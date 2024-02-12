@@ -13,7 +13,11 @@ pub struct PgTableOrderDAO{
 /// utility macro function to produce closure for converting sqlx error to ApiError (custom error)
 macro_rules! sqlx_error_to_api_error {
     ($error_message: expr) => {
-        |err| ApiError::DatabaseError( err)
+        |err: sqlx::Error|
+            match err{
+                sqlx::Error::RowNotFound => ApiError::OrderNotFound,
+                _ => ApiError::DatabaseError(err),
+            }
     };
 }
 
@@ -83,6 +87,7 @@ impl TableOrderDAO for PgTableOrderDAO{
                 .map_err(sqlx_error_to_api_error!("Could not query table orders from DB"))
     }
 
+
     async fn get_specific_table_order(&self, table_id: i16, order_id: i32) -> Result<Vec<OrderItem>, ApiError>{
          
         sqlx::query_as("SELECT * FROM ORDERS WHERE table_id = $1 and order_id = $2 LIMIT 1")
@@ -93,6 +98,7 @@ impl TableOrderDAO for PgTableOrderDAO{
                 .and_then(PgTableOrderDAO::is_existing_order)
 
     }
+    
 
     async fn remove_order(&self, table_id: i16, order_id: i32) -> Result<(), ApiError> {
         let mut transaction = self.db.begin()
@@ -112,8 +118,6 @@ impl TableOrderDAO for PgTableOrderDAO{
             )
 
     }
-
-
 
 }
 
