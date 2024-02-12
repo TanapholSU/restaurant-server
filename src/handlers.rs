@@ -39,7 +39,6 @@ pub fn process_order_requests(order_request:  TableOrdersRequest) -> Vec<OrderIt
 }
 
 
-
 /// utility macro to use dbo to execute query for specific table with table_id
 macro_rules! get_table_orders {
     ($context:expr,$table_id:expr)=>{
@@ -54,18 +53,10 @@ macro_rules! convert_order_items_to_table_order_response {
     };
 }
 
-/// utility function for validating whether the input table_id is in acceptable range or not
-/// It returns true if table id is valid. Otherwise, false is returned
-fn validate_table_id_range(max_tables:i16, table_id: i16) -> bool{
-    if (1..=max_tables).contains(&table_id){
-        return true;
-    }
-    return false
-}
 
 /// helper function to extract table_id from list of orderitems
 /// It returns true if table id is valid. Otherwise, false is returned
-fn validate_table_id_from_orders_requests(input: &[OrderItemRequest], table_id_from_path: i16) -> bool{
+fn validate_table_id_from_orders_requests_and_path(input: &[OrderItemRequest], table_id_from_path: i16) -> bool{
     match input{
         [] => false,
         [head, tail@..] => {
@@ -77,20 +68,59 @@ fn validate_table_id_from_orders_requests(input: &[OrderItemRequest], table_id_f
 }
 
 
-/// validation macro for checking table id 
-macro_rules! validate_table_id_from_path {
-    ( $context:expr, $table_id:expr)=>{
-        if !validate_table_id_range($context.config.get_max_tables(), $table_id){
-            return ApiError::TableNotFound.into_response();
+
+/// utility macro to check input range whether it's from 1..=max_range or not. 
+/// If the input value is out of range, the error_type will be convert to Axum's response and returned to client
+macro_rules! check_range {
+    ($max_range: expr, $value: expr, $error_type: expr) => {
+        if !(1..=$max_range).contains(&$value){
+            return $error_type.into_response();
         }
     };
 }
 
 
+/// validation macro for checking table id range
+macro_rules! validate_table_id_range {
+    ( $context:expr, $table_id:expr)=>{
+        check_range!($context.config.get_max_tables(), $table_id, ApiError::TableNotFound)
+    };
+}
+
+
+
+/// validation macro for checking order id range
+macro_rules! check_order_exists {
+    ( $context: expr, $table_id:expr, $order_id:expr)=>{
+        match $context.dbo.get_specific_table_order($table_id, $order_id).await{
+            Ok(vec_result) => {
+                if vec_result.len() == 0{
+                    return ApiError::OrderNotFound.into_response();
+                }
+            }, 
+            Err(err) => {
+                return err.into_response();
+            }
+        }
+    };
+}
+
+
+
+
+
+/// validation macro for checking order id range
+macro_rules! validate_order_id_range {
+    ( $order_id:expr)=>{
+        check_range!(i32::MAX, $order_id, ApiError::OrderNotFound)
+    };
+}
+
+
 /// validation macro for validating table id from OrderItems and id from path
-macro_rules! validate_table_id_from_orders {
+macro_rules! validate_table_id_from_orders_and_path {
     ( $orders:expr, $table_id_from_path:expr)=>{
-        if !validate_table_id_from_orders_requests($orders, $table_id_from_path){
+        if !validate_table_id_from_orders_requests_and_path($orders, $table_id_from_path){
             return ApiError::BadRequest(format!("table id in json request (or path) is incorrect")).into_response();
         }
     };
@@ -136,15 +166,12 @@ pub async fn handle_add_orders(State(context): State<ApiContext>,
                         ->  Response{
     
     tracing::info!("[add] table id from path = {}, max_table = {}", table_id, context.config.get_max_tables());
+    validate_table_id_range!(context, table_id);
+    validate_table_id_from_orders_and_path!(&table_orders.orders, table_id);
 
-    validate_table_id_from_path!(context, table_id);
-    tracing::info!("[add] check table id from path -> OK");
-    validate_table_id_from_orders!(&table_orders.orders, table_id);
-    tracing::info!("[add] check table id from orders -> OK");
-                        
     let orders = process_order_requests(table_orders);
     tracing::info!("[add] adding orders (size= {})", orders.len());
-
+    
     context.dbo.add_table_orders(&orders) // add orders to a table
         .and_then( get_table_orders!(context, table_id)) // get updated table orders
         .await
@@ -159,9 +186,8 @@ pub async fn handle_get_all_orders_for_specific_table(
         WithRejection(Path(table_id), _): WithRejection<Path<i16>, ApiError>) ->  Response{
 
     tracing::info!("[get all] table id from path = {table_id}");
-    validate_table_id_from_path!(context, table_id);
-    
-    tracing::info!("[get all] getting table orders from table {table_id}");
+    validate_table_id_range!(context, table_id);
+
     context.dbo.get_table_orders(table_id) // get tables order
         .await
         .and_then(convert_order_items_to_table_order_response!(table_id))// convert table orders to TableOrdersResponse
@@ -174,9 +200,10 @@ pub async fn handle_get_specific_table_order(State(context): State<ApiContext>,
     WithRejection(Path((table_id, order_id)), _): WithRejection<Path<(i16, i32)>, ApiError>)  ->  Response{
     
     tracing::info!("[get specific] table id = {table_id}, order_id= {order_id} from path");
-    validate_table_id_from_path!(context, table_id);
     
-    tracing::info!("[get specific] getting specific order from table {table_id} -> {order_id}");
+    validate_table_id_range!(context, table_id);    
+    validate_order_id_range!(order_id);
+
     context.dbo.get_specific_table_order(table_id, order_id) // get specific order
         .await
         .and_then(convert_order_items_to_table_order_response!(table_id))// if success, convert to TableOrderResponse
@@ -189,9 +216,11 @@ pub async fn handle_delete_table_order(State(context): State<ApiContext>,
     WithRejection(Path((table_id, order_id)), _): WithRejection<Path<(i16, i32)>, ApiError>) ->  impl IntoResponse{
     
     tracing::info!("[delete] table id = {table_id}, order_id= {order_id} from path");
-    validate_table_id_from_path!(context, table_id);
-
-    tracing::info!("[delete] deleting order from table {table_id} -> {order_id}");
+    
+    validate_table_id_range!(context, table_id);    
+    validate_order_id_range!(order_id);
+    check_order_exists!(context, table_id, order_id);
+    
     context.dbo.remove_order(table_id, order_id) // remove order
         .and_then(get_table_orders!(context, table_id))// get updated orders for the table
         .await
@@ -260,21 +289,14 @@ mod test{
 
 
     #[test]
-    fn test_validate_table_id_range(){
-        assert_eq!(validate_table_id_range(10, 1), true);
-        assert_eq!(validate_table_id_range(10, 11), false);
-        assert_eq!(validate_table_id_range(-1, 11), false);
-    }
-
-    #[test]
     fn test_validate_table_id_from_orders(){
         let order1 = OrderItemRequest::new_wihout_note(1, "A");
         let order2 = OrderItemRequest::new_wihout_note(1, "B");
         let order3 = OrderItemRequest::new_wihout_note(2, "B");
 
-        assert_eq!(validate_table_id_from_orders_requests(&vec![order1.clone(), order2.clone()], 1), true);
-        assert_eq!(validate_table_id_from_orders_requests(&vec![order1.clone(), order2.clone()], 5), false);
-        assert_eq!(validate_table_id_from_orders_requests(&vec![order1.clone(), order3.clone()], 1), false);
+        assert_eq!(validate_table_id_from_orders_requests_and_path(&vec![order1.clone(), order2.clone()], 1), true);
+        assert_eq!(validate_table_id_from_orders_requests_and_path(&vec![order1.clone(), order2.clone()], 5), false);
+        assert_eq!(validate_table_id_from_orders_requests_and_path(&vec![order1.clone(), order3.clone()], 1), false);
     }
 
     
