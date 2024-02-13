@@ -33,7 +33,7 @@ impl ApiContext{
         let config = AppConfig::new_from_env();
     
         PgPoolOptions::new()
-        // .max_connections(10)
+        .max_connections((&config).get_max_db_pool_size())
         .connect(&config.get_db_url()).await
         .map_err(|x| ApiError::DatabaseError(x))
         .and_then(|pool|{
