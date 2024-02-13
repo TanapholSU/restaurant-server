@@ -83,22 +83,6 @@ macro_rules! check_range {
 }
 
 
-/// validation macro for checking table id range
-macro_rules! validate_table_id_range {
-    ( $context:expr, $table_id:expr)=>{
-        check_range!($context.config.get_max_tables(), $table_id, ApiError::TableNotFound)
-    };
-}
-
-
-/// validation macro for checking order id range
-macro_rules! validate_order_id_range {
-    ( $order_id:expr)=>{
-        check_range!(i32::MAX, $order_id, ApiError::OrderNotFound)
-    };
-}
-
-
 /// validation macro for validating table id from OrderItems and id from path
 macro_rules! validate_table_id_from_orders_and_path {
     ( $orders:expr, $table_id_from_path:expr)=>{
@@ -147,7 +131,8 @@ pub async fn handle_add_orders(State(context): State<ApiContext>,
                         ->  Response{
     
     tracing::info!("[add] table id from path = {}, max_table = {}", table_id, context.config.get_max_tables());
-    validate_table_id_range!(context, table_id);
+
+    check_range!(context.config.get_max_tables(), table_id, ApiError::TableNotFound);
     validate_table_id_from_orders_and_path!(&table_orders.orders, table_id);
 
     let orders = process_order_requests(table_orders);
@@ -167,7 +152,7 @@ pub async fn handle_get_all_orders_for_specific_table(
         WithRejection(Path(table_id), _): WithRejection<Path<i16>, ApiError>) ->  Response{
 
     tracing::info!("[get all] table id from path = {table_id}");
-    validate_table_id_range!(context, table_id);
+    check_range!(context.config.get_max_tables(), table_id, ApiError::TableNotFound);
 
     context.dbo.get_table_orders(table_id) // get tables order
         .await
@@ -182,8 +167,9 @@ pub async fn handle_get_specific_table_order(State(context): State<ApiContext>,
     
     tracing::info!("[get specific] table id = {table_id}, order_id= {order_id} from path");
     
-    validate_table_id_range!(context, table_id);    
-    validate_order_id_range!(order_id);
+    check_range!(context.config.get_max_tables(), table_id, ApiError::TableNotFound);
+    check_range!(i32::MAX, order_id, ApiError::OrderNotFound);
+
 
     context.dbo.get_specific_table_order(table_id, order_id) // get specific order
         .await
@@ -198,8 +184,12 @@ pub async fn handle_delete_table_order(State(context): State<ApiContext>,
     
     tracing::info!("[delete] table id = {table_id}, order_id= {order_id} from path");
     
-    validate_table_id_range!(context, table_id);    
-    validate_order_id_range!(order_id);
+
+    check_range!(context.config.get_max_tables(), table_id, ApiError::TableNotFound);
+    check_range!(i32::MAX, order_id, ApiError::OrderNotFound);
+
+    // validate_table_id_range!(context, table_id);    
+    // validate_order_id_range!(order_id);
     
     context.dbo.remove_order(table_id, order_id) // remove order
         .and_then(get_table_orders!(context, table_id))// get updated orders for the table
