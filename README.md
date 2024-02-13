@@ -50,6 +50,7 @@ The application automatically loads config in the .env (if available).  Please c
 DATABASE_URL = <database connection url>  # e.g., postgres://postgres:password@localhost/test
 HOST = <host ip/ uri>  # e.g., 0.0.0.0  to accept all clients
 PORT = 3333  # service port for client
+MAX_TABLES = 100 # maximum number of tables
 ```
 
 ## Running & test
