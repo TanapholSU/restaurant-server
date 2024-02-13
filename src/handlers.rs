@@ -74,6 +74,9 @@ fn validate_table_id_from_orders_requests_and_path(input: &[OrderItemRequest], t
 macro_rules! check_range {
     ($max_range: expr, $value: expr, $error_type: expr) => {
         if !(1..=$max_range).contains(&$value){
+            // format!("check range failed input={} max_range={}", $value, $max_range).as_str()
+            tracing::error!("out of range input value={} range=[0,{}]" , $value, $max_range);
+
             return $error_type.into_response();
         }
     };
@@ -108,7 +111,6 @@ macro_rules! validate_table_id_from_orders_and_path {
 
 /// handler function for health check operation which checks the db whether it is alive or not 
 pub async fn handle_health_check(State(context): State<ApiContext>) ->  (axum::http::StatusCode, Json<Value>){
-    
     tracing::info!("[health check]");
 
     match sqlx::query("SELECT 1").execute(&context.dbo.db).await{
