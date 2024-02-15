@@ -96,9 +96,9 @@ impl TableOrderDAO for PgTableOrderDAO{
     
 
     async fn remove_order(&self, table_id: i16, order_id: i32) -> Result<(), ApiError> {
-        let mut transaction = self.db.begin()
-            .await
-            .map_err(map_sqlx_error_to_api_error)?;
+        // let mut transaction = self.db.begin()
+        //     .await
+        //     .map_err(map_sqlx_error_to_api_error)?;
 
         
         sqlx::query_as( "DELETE FROM ORDERS WHERE table_id = $1 and order_id = $2 RETURNING *")
@@ -107,10 +107,7 @@ impl TableOrderDAO for PgTableOrderDAO{
             .fetch_all(&self.db).await
             .map_err(map_sqlx_error_to_api_error)
             .and_then(PgTableOrderDAO::is_existing_order)
-            .and(
-                transaction.commit().await
-                    .map_err(map_sqlx_error_to_api_error)  // commit transaction
-            )
+            .and_then(|_| Ok(()))
 
     }
 

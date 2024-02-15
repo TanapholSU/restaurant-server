@@ -39,20 +39,6 @@ pub fn process_order_requests(order_request:  TableOrdersRequest) -> Vec<OrderIt
 }
 
 
-/// utility macro to use dbo to execute query for specific table with table_id
-macro_rules! get_table_orders {
-    ($context:expr,$table_id:expr)=>{
-        |_| $context.dbo.get_table_orders($table_id)
-    };
-}
-
-/// utility macro to convert all Vec<OrderItems> to TableOrderResponse. Then, the result object is converted to Axum Response later
-macro_rules! convert_order_items_to_table_order_response {
-    ( $table_id:expr)=>{
-        |orders: Vec<OrderItem>| Ok(TableOrdersResponse::new(200,  $table_id,  orders).into_response())
-    };
-}
-
 
 /// helper function to extract table_id from list of orderitems
 /// It returns true if table id is valid. Otherwise, false is returned
@@ -139,9 +125,9 @@ pub async fn handle_add_orders(State(context): State<ApiContext>,
     tracing::info!("[add] adding orders (size= {})", orders.len());
     
     context.dbo.add_table_orders(&orders) // add orders to a table
-        .and_then( get_table_orders!(context, table_id)) // get updated table orders
+        .and_then( |_| context.dbo.get_table_orders(table_id)) // get updated table orders
         .await
-        .and_then(convert_order_items_to_table_order_response!(table_id))// generate TableOrdersResponse from orders
+        .and_then( |orders: Vec<OrderItem>| Ok(TableOrdersResponse::new(200,  table_id,  orders).into_response()))// generate TableOrdersResponse from orders
         .unwrap_or_else(ApiError::into_response)  // generate error response in case of error
 }
 
@@ -156,7 +142,7 @@ pub async fn handle_get_all_orders_for_specific_table(
 
     context.dbo.get_table_orders(table_id) // get tables order
         .await
-        .and_then(convert_order_items_to_table_order_response!(table_id))// convert table orders to TableOrdersResponse
+        .and_then( |orders: Vec<OrderItem>| Ok(TableOrdersResponse::new(200,  table_id,  orders).into_response()))// generate TableOrdersResponse from orders
         .unwrap_or_else(ApiError::into_response) // generate error response in case of error
 }
 
@@ -173,7 +159,7 @@ pub async fn handle_get_specific_table_order(State(context): State<ApiContext>,
 
     context.dbo.get_specific_table_order(table_id, order_id) // get specific order
         .await
-        .and_then(convert_order_items_to_table_order_response!(table_id))// if success, convert to TableOrderResponse
+        .and_then( |orders: Vec<OrderItem>| Ok(TableOrdersResponse::new(200,  table_id,  orders).into_response()))// generate TableOrdersResponse from orders
         .unwrap_or_else(ApiError::into_response) // generate error response 
 }
 
@@ -192,9 +178,9 @@ pub async fn handle_delete_table_order(State(context): State<ApiContext>,
     // validate_order_id_range!(order_id);
     
     context.dbo.remove_order(table_id, order_id) // remove order
-        .and_then(get_table_orders!(context, table_id))// get updated orders for the table
+        .and_then( |_| context.dbo.get_table_orders(table_id)) // get updated table orders
         .await
-        .and_then(convert_order_items_to_table_order_response!(table_id)) // convert order item to TableOrdersResponse
+        .and_then( |orders: Vec<OrderItem>| Ok(TableOrdersResponse::new(200,  table_id,  orders).into_response()))// generate TableOrdersResponse from orders
         .unwrap_or_else(ApiError::into_response) // generate error response in case of error
 }
 
