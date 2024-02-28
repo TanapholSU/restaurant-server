@@ -14,11 +14,11 @@ to be counted down in real time, only upon item creation and then removed with t
 
 # Intuitions / notes
 
-* Like billing for each table, we can think that adding orders = update the table information (bill for that table)
+* Like a bill for each table, we can think that adding orders = update the bill for that table
   * So, adding orders won't return order item directly. It will returns the updated table orders
   * Removing order operation is similar to adding operation. It will returns the updated table orders
     * Pros -> Less communication requests. Client doesn't need to call get all tables again after adding new orders
-    * Cons -> Larger payload. 
+    * Cons -> Larger payload
 
 * The requirements don't contain any information about 
   * what kind of restaurants or the uniqueness of menu items 
@@ -50,7 +50,8 @@ The application automatically loads config in the .env (if available).  Please c
 DATABASE_URL = <database connection url>  # e.g., postgres://postgres:password@localhost/test
 HOST = <host ip/ uri>  # e.g., 0.0.0.0  to accept all clients
 PORT = 3333  # service port for client
-MAX_TABLES = 100 # maximum number of tables
+MAX_TABLES = 100  # maximum tables
+MAX_DB_POOL_SIZE = 10 # maximum db pool connections
 ```
 
 ## Running & test

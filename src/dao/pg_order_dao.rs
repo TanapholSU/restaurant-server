@@ -10,13 +10,12 @@ pub struct PgTableOrderDAO{
 }
 
 
-/// utility macro function to produce closure for converting sqlx error to ApiError (custom error)
-macro_rules! sqlx_error_to_api_error {
-    ($error_message: expr) => {
-        |err| ApiError::DatabaseError( err)
-    };
+fn map_sqlx_error_to_api_error(err: sqlx::Error) -> ApiError{
+    match err{
+        sqlx::Error::RowNotFound => ApiError::OrderNotFound,
+        _ => ApiError::DatabaseError(err),
+    }
 }
-
 
 impl PgTableOrderDAO{
     /// constructor to attach sqlx postgres pool (clonable) 
@@ -25,7 +24,6 @@ impl PgTableOrderDAO{
             db
         }
     }
-
 
     /// helper function to build, and execute insert orders query (using bulk insert for performance but can be changed) 
     async fn execute_insert_orders(&self, transaction: &mut Transaction<'static, Postgres>, items: &[OrderItem]) -> Result<(), ApiError>{
@@ -41,7 +39,7 @@ impl PgTableOrderDAO{
 
         query_builder.build().execute(&mut **transaction)
             .await
-            .map_err(sqlx_error_to_api_error!("Could not insert orders to DB"))
+            .map_err(map_sqlx_error_to_api_error)
             // .map_err(|err| ApiError::DatabaseError(format!("Couldn't insert orders to DB: {err} ")))
             .and_then(|_| Ok(()))
     }
@@ -60,72 +58,58 @@ impl PgTableOrderDAO{
 
 impl TableOrderDAO for PgTableOrderDAO{
     async fn add_table_orders(&self, items: &[OrderItem]) -> Result<(), ApiError> {
+        
         // acquire transaction
         // we can  chain with the following statement but the code will be messier to my liking
         let mut transaction = self.db.begin()
             .await
-            .map_err(sqlx_error_to_api_error!("Could not open db transaction"))?;
+            .map_err(map_sqlx_error_to_api_error)?;
             
         self.execute_insert_orders(&mut transaction, items).await
             .and( 
                 transaction.commit().await
-                .map_err(sqlx_error_to_api_error!("Could not commit db transaction"))  // commit transaction
+                .map_err(map_sqlx_error_to_api_error)  // commit transaction
             )
     }
 
 
     async fn get_table_orders(&self, table_id: i16) -> Result<Vec<OrderItem>, ApiError> {
+        
         sqlx::query_as("SELECT * FROM ORDERS WHERE table_id = $1 ORDER BY order_id")
                 .bind(table_id)
                 .fetch_all(&self.db)
                 .await
-                .map_err(sqlx_error_to_api_error!("Could not query table orders from DB"))
-
-        // sqlx::query_as!(OrderItem, 
-        //     "SELECT * FROM ORDERS WHERE table_id = $1 ORDER BY order_id", 
-        // table_id)
-        //     .fetch_all(&self.db).await
-        //     .map_err(sqlx_error_to_api_error!("Could not query table orders from DB"))
-            
+                .map_err(map_sqlx_error_to_api_error)
     }
 
-    async fn get_specific_table_order(&self, table_id: i16, order_id: i32) -> Result<Vec<OrderItem>, ApiError>{
 
+    async fn get_specific_table_order(&self, table_id: i16, order_id: i32) -> Result<Vec<OrderItem>, ApiError>{
+         
         sqlx::query_as("SELECT * FROM ORDERS WHERE table_id = $1 and order_id = $2 LIMIT 1")
                 .bind(table_id)
                 .bind(order_id)
                 .fetch_all(&self.db).await
-                .map_err(sqlx_error_to_api_error!("Could not query specific table order from DB"))
+                .map_err(map_sqlx_error_to_api_error)
                 .and_then(PgTableOrderDAO::is_existing_order)
-        // sqlx::query_as!(OrderItem, 
-        //     "SELECT * FROM ORDERS WHERE table_id = $1 and order_id = $2 LIMIT 1", 
-        //     table_id,
-        //     order_id
-        // ).fetch_all(&self.db).await
-        //     .map_err(sqlx_error_to_api_error!("Could not query specific table order from DB"))
-        //     .and_then(PgTableOrderDAO::is_existing_order)
+
     }
+    
 
     async fn remove_order(&self, table_id: i16, order_id: i32) -> Result<(), ApiError> {
-        let mut transaction = self.db.begin()
-            .await
-            .map_err(sqlx_error_to_api_error!("Could not open db transaction"))?;
+        // let mut transaction = self.db.begin()
+        //     .await
+        //     .map_err(map_sqlx_error_to_api_error)?;
 
-
+        
         sqlx::query_as( "DELETE FROM ORDERS WHERE table_id = $1 and order_id = $2 RETURNING *")
             .bind(table_id)
             .bind(order_id)
             .fetch_all(&self.db).await
-            .map_err(sqlx_error_to_api_error!("Could delete order from DB"))
+            .map_err(map_sqlx_error_to_api_error)
             .and_then(PgTableOrderDAO::is_existing_order)
-            .and(
-                transaction.commit().await
-                    .map_err(sqlx_error_to_api_error!("Could not close db transaction"))  // commit transaction
-            )
+            .and_then(|_| Ok(()))
 
     }
-
-
 
 }
 

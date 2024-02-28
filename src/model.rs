@@ -7,7 +7,7 @@ use sqlx::prelude::FromRow;
 
 
 /// This struct represents an order record in the database.
-#[derive(Serialize, Deserialize, FromRow, Debug, PartialEq, Eq, Clone)]
+#[derive(Serialize, Deserialize, FromRow, Debug, PartialEq, Clone)]
 pub struct OrderItem{
     /// order_id is unique identifier for each order and the data type is i32 because postgres doesn't support unsigned.
     /// In additions, for simple restaurant, it is easier to read for user 

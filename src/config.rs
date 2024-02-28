@@ -8,7 +8,8 @@ pub struct AppConfig{
     pub database_url: Option<String>,
     pub host: Option<String>,
     pub port: Option<u16>,
-    pub max_tables: Option<i16>
+    pub max_tables: Option<i16>,
+    pub max_db_pool_size: Option<u32>
 }
 
 
@@ -23,7 +24,8 @@ impl AppConfig{
                 database_url: None,
                 host: None, 
                 port: None, 
-                max_tables: None 
+                max_tables: None,
+                max_db_pool_size: None
         })
     }
 
@@ -46,6 +48,11 @@ impl AppConfig{
     pub fn get_port(&self) -> u16{
         self.port.unwrap_or(3000)
     }
+
+    /// function to get db connection pool size
+    pub fn get_max_db_pool_size(&self) -> u32{
+        self.max_db_pool_size.unwrap_or(10)
+    }
 }
 
 
@@ -60,17 +67,19 @@ mod test{
             host: Some("host".to_string()),
             port: Some(3333),
             max_tables: Some(101),
+            max_db_pool_size: Some(22)
         };
 
         assert_eq!(config.database_url, Some("URL".to_string()));
         assert_eq!(config.host, Some("host".to_string()));
         assert_eq!(config.port, Some(3333));
         assert_eq!(config.max_tables, Some(101));
+        assert_eq!(config.max_db_pool_size, Some(22));
 
         assert_eq!(config.get_db_url(), "URL");
         assert_eq!(config.get_host(), "host");
         assert_eq!(config.get_port(), 3333);
-        assert_eq!(config.get_max_tables(), 101);
+        assert_eq!(config.get_max_db_pool_size(), 22);
 
     }
 
@@ -81,18 +90,22 @@ mod test{
             database_url: None,
             host: None,
             port: None,
-            max_tables: None
+            max_tables: None,
+            max_db_pool_size: None
         };
 
         assert_eq!(config.database_url, None);
         assert_eq!(config.host,None);
         assert_eq!(config.port,None);
         assert_eq!(config.max_tables,None);
+        assert_eq!(config.max_db_pool_size, None);
+
 
         assert_eq!(config.get_db_url(), r#"postgres://postgres:password@localhost/test"#);
         assert_eq!(config.get_host(), "localhost");
         assert_eq!(config.get_port(), 3000);
         assert_eq!(config.get_max_tables(), 100);
+        assert_eq!(config.get_max_db_pool_size(), 10);
 
     }
 }
