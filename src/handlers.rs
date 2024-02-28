@@ -5,6 +5,7 @@ use axum::response::{IntoResponse, Response};
 use axum_extra::extract::WithRejection;
 use serde_json::{json, Value};
 use futures::TryFutureExt;
+use num;
 
 use crate::dao::order_dao::TableOrderDAO;
 use crate::error::ApiError;
@@ -69,13 +70,14 @@ macro_rules! check_range {
 }
 
 
-/// validation macro for validating table id from OrderItems and id from path
-macro_rules! validate_table_id_from_orders_and_path {
-    ( $orders:expr, $table_id_from_path:expr)=>{
-        if !validate_table_id_from_orders_requests_and_path($orders, $table_id_from_path){
-            return ApiError::BadRequest(format!("table id in json request (or path) is incorrect")).into_response();
-        }
-    };
+
+fn check_range(max_value:i64, value:i64, error_type: ApiError) -> Option<Response>{
+    if !(1..=max_value).contains(&value){
+        tracing::error!("out of range input value={} range=[0,{}]" , value, max_value);
+        return Some(error_type.into_response());
+    }
+
+    None
 }
 
 
@@ -117,9 +119,17 @@ pub async fn handle_add_orders(State(context): State<ApiContext>,
                         ->  Response{
     
     tracing::info!("[add] table id from path = {}, max_table = {}", table_id, context.config.get_max_tables());
+    
+    if let Some(response) = check_range(context.config.get_max_tables() as i64, 
+                                                table_id as i64, 
+                                                ApiError::TableNotFound) {
+        return response;
+    }
 
-    check_range!(context.config.get_max_tables(), table_id, ApiError::TableNotFound);
-    validate_table_id_from_orders_and_path!(&table_orders.orders, table_id);
+
+    if !validate_table_id_from_orders_requests_and_path(&table_orders.orders, table_id){
+        return ApiError::BadRequest(format!("table id in json request (or path) is incorrect")).into_response();
+    }
 
     let orders = process_order_requests(table_orders);
     tracing::info!("[add] adding orders (size= {})", orders.len());
@@ -138,7 +148,14 @@ pub async fn handle_get_all_orders_for_specific_table(
         WithRejection(Path(table_id), _): WithRejection<Path<i16>, ApiError>) ->  Response{
 
     tracing::info!("[get all] table id from path = {table_id}");
-    check_range!(context.config.get_max_tables(), table_id, ApiError::TableNotFound);
+    if let Some(response) = check_range(context.config.get_max_tables() as i64, 
+        table_id as i64, 
+        ApiError::TableNotFound) {
+        return response;
+    }
+
+
+    // check_range!(context.config.get_max_tables(), table_id, ApiError::TableNotFound);
 
     context.dbo.get_table_orders(table_id) // get tables order
         .await
@@ -153,7 +170,24 @@ pub async fn handle_get_specific_table_order(State(context): State<ApiContext>,
     
     tracing::info!("[get specific] table id = {table_id}, order_id= {order_id} from path");
     
-    check_range!(context.config.get_max_tables(), table_id, ApiError::TableNotFound);
+    if let Some(response) = check_range(context.config.get_max_tables() as i64, 
+                                                table_id as i64, 
+                                                ApiError::TableNotFound) {
+        return response;
+    }
+
+    if let Some(response) = check_range(context.config.get_max_tables() as i64, 
+        table_id as i64, 
+        ApiError::TableNotFound) {
+        return response;
+    }
+
+    if let Some(response) = check_range(context.config.get_max_tables() as i64, 
+        table_id as i64, 
+        ApiError::TableNotFound) {
+        return response;
+    }
+
     check_range!(i32::MAX, order_id, ApiError::OrderNotFound);
 
 
